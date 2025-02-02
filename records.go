@@ -14,7 +14,8 @@ type Records struct {
 	origins []string // for easy matching, these strings are the index in the map m.
 	m       map[string][]dns.RR
 
-	Next plugin.Handler
+	Next        plugin.Handler
+	Fallthrough bool
 }
 
 // ServeDNS implements the plugin.Handle interface.
@@ -51,6 +52,9 @@ func (re *Records) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 		m.Rcode = dns.RcodeNameError
 		if soa != nil {
 			m.Ns = []dns.RR{soa}
+		}
+		if re.Fallthrough {
+			return plugin.NextOrFailure(re.Name(), re.Next, ctx, w, r)
 		}
 		w.WriteMsg(m)
 		return dns.RcodeSuccess, nil

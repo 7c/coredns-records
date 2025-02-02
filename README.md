@@ -1,8 +1,16 @@
 # records
+this plugins is forked from https://github.com/coredns/coredns/plugin/records and added fallthrough support, if `fallthrough` is specified, the plugin will call the next plugin if the zone is not found.
 
 ## Name
-
 *records* - enables serving (basic) zone data directly from the Corefile.
+
+## Compile
+```
+cd coredns
+echo "records:github.com/7c/coredns-records" >> plugin.cfg
+make
+./coredns -plugins | grep records
+```
 
 ## Description
 
@@ -34,6 +42,7 @@ This plugin can only be used once per Server Block.
 ~~~
 records [ZONES...] {
     [INLINE]
+    [fallthrough]
 }
 ~~~
 

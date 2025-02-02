@@ -16,12 +16,15 @@ var log = clog.NewWithPlugin("records")
 func init() { plugin.Register("records", setup) }
 
 func setup(c *caddy.Controller) error {
+	log.Info("records plugin loaded")
 	re, err := recordsParse(c)
 	if err != nil {
+		log.Error("records plugin setup error", err)
 		return plugin.Error("records", err)
 	}
 
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
+		log.Info("records plugin setup success")
 		re.Next = next
 		return re
 	})
@@ -50,11 +53,18 @@ func recordsParse(c *caddy.Controller) (*Records, error) {
 		// the record we just set the ORIGIN to the correct value and magic will happen. If no origin we set it to "."
 
 		for c.NextBlock() {
+			if c.Val() == "fallthrough" {
+				log.Info("records plugin fallthrough mode enabled")
+				re.Fallthrough = true
+				continue
+			}
 			s := c.Val() + " "
 			s += strings.Join(c.RemainingArgs(), " ")
 			for _, o := range re.origins {
+				log.Info("records plugin parse block origin o:", o, " s:", s)
 				rr, err := dns.NewRR("$ORIGIN " + o + "\n" + s + "\n")
 				if err != nil {
+					log.Error("records plugin parse block error", err)
 					return nil, err
 				}
 				rr.Header().Name = strings.ToLower(rr.Header().Name)
